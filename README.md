@@ -109,7 +109,8 @@ dsh plugin --profile desktop add @icelily/dsh-gitbash-preset
 **默认（workspace-write）会话也能用**，不需要先切「完全访问」。
 
 > ⚠️ **它不是被沙箱限制着跑的。** MSYS 在 Windows 受限令牌沙箱里无法初始化，所以这些命令
-> **按未隔离执行**，每次结果都会带 `enforcement: gitbash-unconfined`。需要"宁可不跑也不越界"的部署，
+> **按未隔离执行**：结果的沙箱事实里会带 `enforcement: gitbash-unconfined`（Web GUI 终端卡片可见；
+> 模型可见文本不含这一行，见 [已知限制](#limits)）。需要"宁可不跑也不越界"的部署，
 > 请把 `requireFullAccess: true` 打开（见 [配置](#config)）。
 
 ---
@@ -360,7 +361,10 @@ dsh-gitbash-preset/
   装了但不在标准目录时，用 `GIT_BASH` 环境变量或 `shellPath` 配置指路。
 - **命令按未隔离运行**。MSYS 运行时无法在 Windows 受限令牌沙箱内初始化（创建不了 signal pipe），
   DSH 的 ACL runner 无法包装 Git Bash 的 argv —— 包了就是每条命令直接终止。所以执行器**照常执行并如实标注**
-  `sandbox: { mode, denied: false, enforcement: 'gitbash-unconfined' }`（`dsh-tool-bash` 会把它带到模型可见的结果里）。
+  `sandbox: { mode, denied: false, enforcement: 'gitbash-unconfined' }`：`dsh-tool-bash` 会把它放进结果的
+  结构化沙箱事实，Web GUI 的终端卡片据此显示 `File sandbox: <mode>; enforcement: gitbash-unconfined`。
+  **但模型可见的文本里没有这一行**（DSH 只在 `enforcement: 'partial'` 时追加提示），所以需要"模型自己也知道
+  没有隔离"的场景，请打开 `requireFullAccess`，或在会话说明里写明这条边界。
   需要「不隔离就不跑」的部署，把 `requireFullAccess` 设为 `true` 恢复拒绝策略。
   **这不是沙箱绕过**：插件从不声称自己隔离，也不伪装成被隔离。
 - **bash 不保持状态**。每次调用都是新 shell，`cd` / `export` 不会留到下一次；后台命令也没启用

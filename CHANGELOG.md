@@ -23,9 +23,11 @@
 ### 沙箱：改为「未隔离但如实标注」
 
 - MSYS 在 Windows 受限令牌沙箱内无法初始化，DSH 的 ACL runner 无法包装 Git Bash 的 argv。
-  因此默认**不再拒绝**受限会话里的命令，而是照常执行并在结果里标注
-  `sandbox: { mode, denied: false, enforcement: 'gitbash-unconfined' }`
-  （`dsh-tool-bash` 会把 `enforcement` 带到模型可见的结果里）。
+  因此默认**不再拒绝**受限会话里的命令，而是照常执行并在结果的沙箱事实里标注
+  `sandbox: { mode, denied: false, enforcement: 'gitbash-unconfined' }`。
+  `dsh-tool-bash` 会把 `enforcement` 放进结构化结果，Web GUI 的终端卡片据此显示
+  `File sandbox: <mode>; enforcement: gitbash-unconfined`；**模型可见文本不含这一行**
+  （DSH 只在 `enforcement: 'partial'` 时追加提示），需要模型也知道边界的场景请打开 `requireFullAccess`。
   这样默认（workspace-write）会话也能开箱即用（#8）。
 - 新增配置 `requireFullAccess`（默认 `false`）：设为 `true` 可恢复旧的 fail-closed 行为
   （非「完全访问」一律拒绝并给升级指引）。
